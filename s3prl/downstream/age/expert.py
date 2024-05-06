@@ -12,7 +12,7 @@ from torch.nn.utils.rnn import pad_sequence
 
 from ..model import *
 from .model import *
-from .dataset import SpeechEmotionDataset, collate_fn
+from .dataset import CommonVoiceAgeDataset, collate_fn
 
 
 class DownstreamExpert(nn.Module):
@@ -28,18 +28,17 @@ class DownstreamExpert(nn.Module):
         self.modelrc = downstream_expert['modelrc']
 
         train_meta = self.datarc["train_meta"]
-        base_dir = self.datarc["base_dir"]
+        test_meta = self.datarc["test_meta"]
         segment_size = self.datarc["segment_size"]
         
-        traindataset = SpeechEmotionDataset(train_meta, segment_size, base_dir)
-        trainlen = int((1 - self.datarc['valid_ratio']*2) * len(traindataset))
-        val_length = len(traindataset) - trainlen
-        lengths = [trainlen, val_length]
+        traindataset = CommonVoiceAgeDataset(train_meta, segment_size)
+        trainlen = int((1 - self.datarc['valid_ratio']) * len(traindataset))
+        lengths = [trainlen, len(traindataset) - trainlen]
         
         torch.manual_seed(0)
-        self.train_dataset, dev_dataset = random_split(traindataset, lengths)
-        lengths = [val_length//2, val_length-(val_length//2)]
-        self.dev_dataset, self.test_dataset = random_split(dev_dataset, lengths)
+        self.train_dataset, self.dev_dataset = random_split(traindataset, lengths)
+
+        self.test_dataset = CommonVoiceAgeDataset(test_meta, segment_size)
 
         model_cls = eval(self.modelrc['select'])
         model_conf = self.modelrc.get(self.modelrc['select'], {})
@@ -52,11 +51,11 @@ class DownstreamExpert(nn.Module):
         self.objective = nn.CrossEntropyLoss()
         self.expdir = expdir
         self.register_buffer('best_score', torch.zeros(1))
-        self.label_dict = {0:"angry", 1:'disgust', 2:'sad', 3:'fear', 4:'happy', 5:'neutral'}
+        self.label_dict = {0:'teenagers', 1:'senior', 2:'adult'}
 
 
     def get_downstream_name(self):
-        return 'emotion'
+        return 'age'
 
 
     def _get_train_dataloader(self, dataset):

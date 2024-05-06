@@ -1,11 +1,11 @@
 runner:
-  total_steps: 30000
+  total_steps: 100000
   gradient_clipping: 1
   gradient_accumulate_steps: 8
 
   log_step: 500
-  eval_step: 1000
-  save_step: 1000
+  eval_step: 2000
+  save_step: 2000
   max_keep: 1
   eval_dataloaders:
     - dev
@@ -13,8 +13,23 @@ runner:
 
 optimizer:
   name: TorchOptim
-  torch_optim_name: Adam
+  torch_optim_name: AdamW
   lr: 1.0e-4
+
+  
+specaug:
+  adaptive: true
+  adaptive_number_ratio: 0.04
+  adaptive_size_ratio: 0.04
+  max_n_time_masks: 20
+  apply_time_warp: true
+  apply_time_mask: true
+  apply_freq_mask: true
+  time_warp_window: 5
+  time_mask_width_range: [0, 40]
+  freq_mask_width_range: [0, 50]
+  num_freq_mask: 4
+  num_time_mask: 2
 
 # comment the whole scheduler config block
 # to disable learning rate scheduling
@@ -24,14 +39,13 @@ optimizer:
 
 downstream_expert:
   datarc:
-    root: /groups/public/benchmark/IEMOCAP
-    meta_data: ./downstream/emotion/meta_data
-    test_fold: fold1
-    pre_load: True
-    train_batch_size: 4
-    eval_batch_size: 4
-    num_workers: 6
-    valid_ratio: 0.2
+    train_meta: /data/lmorove1/hwang258/data/commonvoice/SpeechEmotionData/metadata.csv
+    base_dir: /data/lmorove1/hwang258/data/commonvoice/SpeechEmotionData
+    train_batch_size: 32
+    eval_batch_size: 32
+    num_workers: 4
+    valid_ratio: 0.05
+    segment_size: 64000
 
   modelrc:
     projector_dim: 256

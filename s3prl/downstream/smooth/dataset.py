@@ -19,18 +19,17 @@ import torch
 SAMPLE_RATE = 16000
 
 
-class SpeechEmotionDataset(Dataset):
-    def __init__(self, meta_path, segment_size=None, base_dir=None):
+class DreamVoiceSmoothDataSet(Dataset):
+    def __init__(self, meta_path, segment_size=None):
         with open(meta_path, mode='r', newline='') as file:
             reader = csv.reader(file)
             self.data = list(reader)
             
-        self.class_num = 6
+        self.class_num = 2
         self.segment_size = segment_size
-        self.base_dir = base_dir
         
     def _load_wav(self, path):
-        wav, sr = torchaudio.load(path_join(self.base_dir, path))
+        wav, sr = torchaudio.load(path)
         if sr != SAMPLE_RATE:
             self.resampler = Resample(sr, SAMPLE_RATE)
             wav = self.resampler(wav)
@@ -46,20 +45,10 @@ class SpeechEmotionDataset(Dataset):
 
     def __getitem__(self, idx):
         labelid = self.data[idx][1]
-        # tags = ['ang', 'dis', 'sad', 'fea', 'hap', 'neu']
-        if labelid =='ang':
+        if labelid =='Smooth':
             label = 0
-        elif labelid == 'dis':
+        elif labelid =='Rough':
             label = 1
-        elif labelid == 'sad':
-            label = 2
-        elif labelid == 'fea':
-            label = 3
-        elif labelid == 'hap':
-            label = 4
-        elif labelid == 'neu':
-            label = 5
-        
 
         wav = self._load_wav(self.data[idx][0])
         return wav.numpy(), label, self.data[idx][0]

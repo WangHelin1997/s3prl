@@ -17,6 +17,7 @@ from tensorboardX import SummaryWriter
 from torch.utils.data import DistributedSampler
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.distributed import is_initialized, get_rank, get_world_size
+from torchaudio.transforms import Resample
 
 from s3prl import hub
 from s3prl.optimizers import get_optimizer
@@ -25,6 +26,8 @@ from s3prl.upstream.interfaces import Featurizer
 from s3prl.utility.helper import is_leader_process, get_model_state, show, defaultdict
 
 from huggingface_hub import HfApi, HfFolder, Repository
+from tqdm import tqdm
+import csv
 
 SAMPLE_RATE = 16000
 
@@ -512,7 +515,9 @@ class Runner():
             wav = self.downstream.model.load_audio(filepath)
         else:
             wav, sr = torchaudio.load(str(filepath))
-            assert sr == SAMPLE_RATE, sr
+            if sr != SAMPLE_RATE:
+                resampler = Resample(sr, SAMPLE_RATE)
+                wav = resampler(wav)
         wavs = [wav.view(-1).to(self.args.device)]
 
         for entry in self.all_entries:
@@ -521,7 +526,44 @@ class Runner():
         with torch.no_grad():
             features = self.upstream.model(wavs)
             features = self.featurizer.model(wavs, features)
-            self.downstream.model.inference(features, [filename])
+            result = self.downstream.model.inference(features)
+            print(filename, result)
+            
+    def test(self):
+        with open(os.path.join(self.args.evaluate_split), mode='r', newline='') as file:
+            reader = csv.reader(file)
+            metadata = list(reader)
+        # metadata = metadata[:100]
+        outmeta = []
+        for idx, metadata1 in tqdm(enumerate(metadata)):
+            filepath = metadata1[0]
+            try:
+                tmp = metadata1
+                if hasattr(self.downstream.model, "load_audio"):
+                    wav = self.downstream.model.load_audio(filepath)
+                else:
+                    wav, sr = torchaudio.load(str(filepath))
+                    if sr != SAMPLE_RATE:
+                        resampler = Resample(sr, SAMPLE_RATE)
+                        wav = resampler(wav)
+                wavs = [wav.view(-1).to(self.args.device)]
+
+                for entry in self.all_entries:
+                    entry.model.eval()
+
+                with torch.no_grad():
+                    features = self.upstream.model(wavs)
+                    features = self.featurizer.model(wavs, features)
+                    result = self.downstream.model.inference(features)
+                tmp.append(result)
+                outmeta.append(tmp)
+            except:
+                print('ERROR: '+filepath)
+        
+        with open(self.args.output_name, mode='w', newline='') as file:
+            writer = csv.writer(file)
+            writer.writerows(outmeta)
+
 
     def push_to_huggingface_hub(self):
         """Creates a downstream repository on the Hub and pushes training artifacts to it."""
