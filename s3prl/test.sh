@@ -38,3 +38,8 @@ python3 run_downstream.py -m test \
     -t ${META_DIR}/alldata.csv \
     -x ${META_DIR}/alldata.csv \
     -u hubert -e ${RESULT_DIR}/downstream/CommonVoiceGenderHubert/dev-best.ckpt
+
+python3 run_downstream.py -m test \
+    -t ${META_DIR}/alldata.csv \
+    -x ${META_DIR}/alldata.csv \
+    -u hubert -e ${RESULT_DIR}/downstream/CommonVoiceAgeHubert/dev-best.ckpt
