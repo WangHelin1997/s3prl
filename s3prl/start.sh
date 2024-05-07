@@ -18,7 +18,7 @@ python3 run_downstream.py -m train -n CommonVoiceAgeHubert -u hubert -d age -s h
 
 # python3 run_downstream.py -m train -n SpeechEmotionHubert -u hubert -d emotion -s hidden_states -l 4 -f
 
-# python3 run_downstream.py -m train -n CommonVoiceGenderHubert -u hubert -d gender -s hidden_states -l 4 -f
+python3 run_downstream.py -m train -n CommonVoiceGenderHubert -u hubert -d gender -s hidden_states -l 4 -f
 
 # python3 run_downstream.py -m train -n DreamVoiceBrightHubert -u hubert -d bright -s hidden_states -l 4 -f
 
