@@ -1,0 +1,63 @@
+runner:
+  total_steps: 100000
+  gradient_clipping: 1
+  gradient_accumulate_steps: 8
+
+  log_step: 500
+  eval_step: 2000
+  save_step: 2000
+  max_keep: 1
+  eval_dataloaders:
+    - dev
+    - test
+
+optimizer:
+  name: TorchOptim
+  torch_optim_name: AdamW
+  lr: 1.0e-4
+
+  
+# specaug:
+#   adaptive: false
+#   adaptive_number_ratio: 0.04
+#   adaptive_size_ratio: 0.04
+#   max_n_time_masks: 20
+#   apply_time_warp: true
+#   apply_time_mask: true
+#   apply_freq_mask: true
+#   time_warp_window: 5
+#   time_mask_width_range: [0, 40]
+#   freq_mask_width_range: [0, 50]
+#   num_freq_mask: 4
+#   num_time_mask: 2
+
+# comment the whole scheduler config block
+# to disable learning rate scheduling
+# scheduler:
+#   name: linear_schedule_with_warmup
+#   num_warmup_steps: 1400
+
+downstream_expert:
+  datarc:
+    train_meta: /data/lmorove1/hwang258/data/commonvoice/metadata/gender_train.csv
+    test_meta: /data/lmorove1/hwang258/data/commonvoice/metadata/gender_test.csv
+    train_batch_size: 32
+    eval_batch_size: 32
+    num_workers: 4
+    valid_ratio: 0.05
+    segment_size: 64000
+
+  modelrc:
+    projector_dim: 256
+    select: UtteranceLevel
+
+    UtteranceLevel:
+      pooling: MeanPooling
+
+    DeepModel:
+      model_type: CNNSelfAttention
+      hidden_dim: 80
+      kernel_size: 5
+      padding: 2
+      pooling: 5
+      dropout: 0.4
