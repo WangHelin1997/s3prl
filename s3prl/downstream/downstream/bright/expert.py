@@ -6,7 +6,6 @@ from pathlib import Path
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 from torch.utils.data import DataLoader, random_split, DistributedSampler
 from torch.distributed import is_initialized
 from torch.nn.utils.rnn import pad_sequence
@@ -148,9 +147,7 @@ class DownstreamExpert(nn.Module):
         features = pad_sequence(features, batch_first=True)
         features = self.projector(features)
         predicted, _ = self.model(features, features_len)
-
-        score = torch.max(F.softmax(predicted, dim=-1)).cpu().numpy()
         predicted_classid = predicted.max(dim=-1).indices.cpu().numpy()
         result = self.label_dict[predicted_classid[0]]
         
-        return result, score
+        return result

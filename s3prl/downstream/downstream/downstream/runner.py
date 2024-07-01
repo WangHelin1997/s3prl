@@ -28,6 +28,7 @@ from s3prl.utility.helper import is_leader_process, get_model_state, show, defau
 from huggingface_hub import HfApi, HfFolder, Repository
 from tqdm import tqdm
 import csv
+import pandas as pd
 
 SAMPLE_RATE = 16000
 
@@ -148,7 +149,7 @@ class Runner():
         if is_initialized() and get_rank() > 0:
             torch.distributed.barrier()
             upstream_refresh = False
-
+            
         model = Upstream(
             ckpt = ckpt_path,
             model_config = self.args.upstream_model_config,
@@ -507,27 +508,41 @@ class Runner():
         return [] if type(save_names) is not list else save_names
 
     def inference(self):
-        filepath = Path(self.args.evaluate_split)
-        assert filepath.is_file(), filepath
-        filename = filepath.stem
+        import glob
+        from tqdm import tqdm
+        filenames = glob.glob(os.path.join(self.args.evaluate_split, "*.wav"))
+        savedata = {
+            'segment_id': [],
+            self.args.tag: [],
+            self.args.tag+"_value": []
+        }
 
-        if hasattr(self.downstream.model, "load_audio"):
-            wav = self.downstream.model.load_audio(filepath)
-        else:
-            wav, sr = torchaudio.load(str(filepath))
-            if sr != SAMPLE_RATE:
-                resampler = Resample(sr, SAMPLE_RATE)
-                wav = resampler(wav)
-        wavs = [wav.view(-1).to(self.args.device)]
+        for filename in tqdm(filenames):
+            
+            if hasattr(self.downstream.model, "load_audio"):
+                wav = self.downstream.model.load_audio(filename)
+            else:
+                wav, sr = torchaudio.load(filename)
+                if sr != SAMPLE_RATE:
+                    resampler = Resample(sr, SAMPLE_RATE)
+                    wav = resampler(wav)
+            wavs = [wav.view(-1).to(self.args.device)]
+    
+            for entry in self.all_entries:
+                entry.model.eval()
+    
+            with torch.no_grad():
+                features = self.upstream.model(wavs)
+                features = self.featurizer.model(wavs, features)
+                result, score = self.downstream.model.inference(features)
+                savedata['segment_id'].append(filename.split('/')[-1].split('.wav')[0])
+                savedata[self.args.tag].append(result)
+                savedata[self.args.tag+"_value"].append(score)
+        # print(savedata, self.args.output_name)
+        df = pd.DataFrame(savedata)
+        # Save DataFrame to CSV
+        df.to_csv(self.args.output_name, index=False)
 
-        for entry in self.all_entries:
-            entry.model.eval()
-
-        with torch.no_grad():
-            features = self.upstream.model(wavs)
-            features = self.featurizer.model(wavs, features)
-            result = self.downstream.model.inference(features)
-            print(filename, result)
             
     def test(self):
         with open(os.path.join(self.args.evaluate_split), mode='r', newline='') as file:

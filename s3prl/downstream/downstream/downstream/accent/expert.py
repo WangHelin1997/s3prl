@@ -12,7 +12,7 @@ from torch.nn.utils.rnn import pad_sequence
 
 from ..model import *
 from .model import *
-from .dataset import SpeechEmotionDataset, collate_fn
+from .dataset import SpeechAccentDataset, collate_fn
 
 
 class DownstreamExpert(nn.Module):
@@ -30,33 +30,59 @@ class DownstreamExpert(nn.Module):
         train_meta = self.datarc["train_meta"]
         base_dir = self.datarc["base_dir"]
         segment_size = self.datarc["segment_size"]
-        
-        traindataset = SpeechEmotionDataset(train_meta, segment_size, base_dir)
-        trainlen = int((1 - self.datarc['valid_ratio']*2) * len(traindataset))
-        val_length = len(traindataset) - trainlen
-        lengths = [trainlen, val_length]
-        
-        torch.manual_seed(0)
-        self.train_dataset, dev_dataset = random_split(traindataset, lengths)
-        lengths = [val_length//2, val_length-(val_length//2)]
-        self.dev_dataset, self.test_dataset = random_split(dev_dataset, lengths)
 
+        if kwargs.get('mode', 'train') == "inference":
+            pass
+        else:
+            self.train_dataset = SpeechAccentDataset(train_meta,'training', segment_size, base_dir)
+            self.dev_dataset = SpeechAccentDataset(train_meta,'validation', segment_size, base_dir)
+            self.test_dataset = SpeechAccentDataset(train_meta,'test', segment_size, base_dir)
+
+        torch.manual_seed(0)
+        label_dict = {
+            "Dutch":0,
+            "German":1,
+            "Czech":2,
+            "Polish":3,
+            "French":4,
+            "Hungarian":5,
+            "Finnish":6,
+            "Romanian":7,
+            "Slovak":8,
+            "Spanish":9,
+            "Italian":10,
+            "Estonian":11,
+            "Lithuanian":12,
+            "Croatian":13,
+            "Slovene":14,
+            "English":15,
+            "Scottish":16,
+            "Irish":17,
+            "NorthernIrish":18,
+            "Indian":19,
+            "Vietnamese":20,
+            "Canadian":21,
+            "American":22
+            }
+        self.label_dict = {}
+        for key, value in label_dict.items():
+            self.label_dict[value] = key
+        
         model_cls = eval(self.modelrc['select'])
         model_conf = self.modelrc.get(self.modelrc['select'], {})
         self.projector = nn.Linear(upstream_dim, self.modelrc['projector_dim'])
         self.model = model_cls(
             input_dim = self.modelrc['projector_dim'],
-            output_dim = traindataset.class_num,
+            output_dim = len(self.label_dict),
             **model_conf,
         )
         self.objective = nn.CrossEntropyLoss()
         self.expdir = expdir
         self.register_buffer('best_score', torch.zeros(1))
-        self.label_dict = {0:"angry", 1:'disgust', 2:'sad', 3:'fear', 4:'happy', 5:'neutral'}
-
+        
 
     def get_downstream_name(self):
-        return 'emotion'
+        return 'accent'
 
 
     def _get_train_dataloader(self, dataset):
@@ -148,7 +174,9 @@ class DownstreamExpert(nn.Module):
         features = pad_sequence(features, batch_first=True)
         features = self.projector(features)
         predicted, _ = self.model(features, features_len)
+
+        score = torch.max(F.softmax(predicted, dim=-1)).cpu().numpy()
         predicted_classid = predicted.max(dim=-1).indices.cpu().numpy()
         result = self.label_dict[predicted_classid[0]]
         
-        return result
+        return result, score
