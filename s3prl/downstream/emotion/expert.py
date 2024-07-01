@@ -148,7 +148,9 @@ class DownstreamExpert(nn.Module):
         features = pad_sequence(features, batch_first=True)
         features = self.projector(features)
         predicted, _ = self.model(features, features_len)
+
+        score = torch.max(F.softmax(predicted, dim=-1)).cpu().numpy()
         predicted_classid = predicted.max(dim=-1).indices.cpu().numpy()
         result = self.label_dict[predicted_classid[0]]
         
-        return result
+        return result, score
