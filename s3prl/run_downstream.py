@@ -21,6 +21,7 @@ def get_downstream_args():
 
     # train or test for this experiment
     parser.add_argument('-m', '--mode', choices=['train', 'evaluate', 'inference', 'test'], required=True)
+    parser.add_argument('--tag', default=None)
     parser.add_argument('-t', '--evaluate_split', default='test')
     parser.add_argument('-x', '--output_name', default='test')
     parser.add_argument('-o', '--override', help='Used to override args and config, this is at the highest priority')

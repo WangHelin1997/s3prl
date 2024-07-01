@@ -14,22 +14,6 @@ ml
 
 nvidia-smi
 
-python3 run_downstream.py -m train -n CommonVoiceAgeHubert -u hubert -d age -s hidden_states
+python3 run_downstream.py -m train -n CommonVoiceAgeHubertSpecAug -u hubert -d age -s hidden_states
 
-# python3 run_downstream.py -m train -n SpeechEmotionHubert -u hubert -d emotion -s hidden_states -l 4 -f
-
-python3 run_downstream.py -m train -n CommonVoiceGenderHubert -u hubert -d gender -s hidden_states -l 4 -f
-
-# python3 run_downstream.py -m train -n DreamVoiceBrightHubert -u hubert -d bright -s hidden_states -l 4 -f
-
-# python3 run_downstream.py -m train -n DreamVoiceSmoothHubert -u hubert -d smooth -s hidden_states -l 4 -f
-
-# python3 run_downstream.py -m train -n CommonVoiceAgeHubertSpecAug -u hubert -d age -s hidden_states -l 4 -f
-
-# python3 run_downstream.py -m train -n CommonVoiceAgeHubertAll -u hubert -d age -s hidden_states -f
-
-# python3 run_downstream.py -m train -n SpeechEmotionHubertSpecAug -u hubert -d emotion -s hidden_states -l 4 -f
-
-# python3 run_downstream.py -m train -n DreamVoiceBrightHubertSpecAug -u hubert -d bright -s hidden_states -l 4 -f
-
-# python3 run_downstream.py -m train -n DreamVoiceSmoothHubertSpecAug -u hubert -d smooth -s hidden_states -l 4 -f
+python3 run_downstream.py -m train -n CommonVoiceGenderHubertSpecAug -u hubert -d gender -s hidden_states
