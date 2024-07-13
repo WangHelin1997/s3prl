@@ -91,6 +91,7 @@ class Runner():
     """
     def __init__(self, args, config):
         self.args = args
+        print(arg.tag)
         self.config = config
         self.init_ckpt = torch.load(self.args.init_ckpt, map_location='cpu') if self.args.init_ckpt else {}
 
