@@ -30,15 +30,18 @@ class DownstreamExpert(nn.Module):
         train_meta = self.datarc["train_meta"]
         test_meta = self.datarc["test_meta"]
         segment_size = self.datarc["segment_size"]
-        
-        traindataset = CommonVoiceAgeDataset(train_meta, segment_size)
-        trainlen = int((1 - self.datarc['valid_ratio']) * len(traindataset))
-        lengths = [trainlen, len(traindataset) - trainlen]
-        
-        torch.manual_seed(0)
-        self.train_dataset, self.dev_dataset = random_split(traindataset, lengths)
 
-        self.test_dataset = CommonVoiceAgeDataset(test_meta, segment_size)
+        if kwargs.get('mode', 'train') == "inference":
+            pass
+        else:
+            traindataset = CommonVoiceAgeDataset(train_meta, segment_size)
+            trainlen = int((1 - self.datarc['valid_ratio']) * len(traindataset))
+            lengths = [trainlen, len(traindataset) - trainlen]
+            
+            torch.manual_seed(0)
+            self.train_dataset, self.dev_dataset = random_split(traindataset, lengths)
+    
+            self.test_dataset = CommonVoiceAgeDataset(test_meta, segment_size)
 
         model_cls = eval(self.modelrc['select'])
         model_conf = self.modelrc.get(self.modelrc['select'], {})
