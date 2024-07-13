@@ -87,6 +87,7 @@ def get_downstream_args():
     parser.add_argument('--disable_cudnn', action='store_true', help='Disable CUDNN')
 
     args = parser.parse_args()
+    tag = args.tag
     backup_files = []
 
     if args.expdir is None:
@@ -120,7 +121,6 @@ def get_downstream_args():
                 if key in preserve_list:
                     new_dict.pop(key)
             out_dict.update(new_dict)
-            print(out_dict)
             return Namespace(**out_dict)
 
         # overwrite args
@@ -213,6 +213,7 @@ def main():
         torch.backends.cudnn.enabled = True
         torch.backends.cudnn.deterministic = True
         torch.backends.cudnn.benchmark = False
+    args.tag = tag
     print(args.tag)
     runner = Runner(args, config)
     eval(f'runner.{args.mode}')()
