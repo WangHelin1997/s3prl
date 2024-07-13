@@ -114,12 +114,16 @@ def get_downstream_args():
         ckpt = torch.load(ckpt_pth, map_location='cpu')
 
         def update_args(old, new, preserve_list=None):
+            print("debug")
             out_dict = vars(old)
             new_dict = vars(new)
             for key in list(new_dict.keys()):
                 if key in preserve_list:
                     new_dict.pop(key)
             out_dict.update(new_dict)
+            for key in list(new_dict.keys()):
+                if key not in preserve_list:
+                    out_dict[key] = new_dict[key]
             return Namespace(**out_dict)
 
         # overwrite args
