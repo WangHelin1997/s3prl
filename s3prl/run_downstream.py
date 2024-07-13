@@ -213,7 +213,7 @@ def main():
         torch.backends.cudnn.enabled = True
         torch.backends.cudnn.deterministic = True
         torch.backends.cudnn.benchmark = False
-
+    print(args.tag)
     runner = Runner(args, config)
     eval(f'runner.{args.mode}')()
 
