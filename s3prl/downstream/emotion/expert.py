@@ -43,19 +43,19 @@ class DownstreamExpert(nn.Module):
             self.train_dataset, dev_dataset = random_split(traindataset, lengths)
             lengths = [val_length//2, val_length-(val_length//2)]
             self.dev_dataset, self.test_dataset = random_split(dev_dataset, lengths)
-
+        self.label_dict = {0:"angry", 1:'disgust', 2:'sad', 3:'fear', 4:'happy', 5:'neutral'}
         model_cls = eval(self.modelrc['select'])
         model_conf = self.modelrc.get(self.modelrc['select'], {})
         self.projector = nn.Linear(upstream_dim, self.modelrc['projector_dim'])
         self.model = model_cls(
             input_dim = self.modelrc['projector_dim'],
-            output_dim = traindataset.class_num,
+            output_dim = len(self.label_dict),
             **model_conf,
         )
         self.objective = nn.CrossEntropyLoss()
         self.expdir = expdir
         self.register_buffer('best_score', torch.zeros(1))
-        self.label_dict = {0:"angry", 1:'disgust', 2:'sad', 3:'fear', 4:'happy', 5:'neutral'}
+        
 
 
     def get_downstream_name(self):
