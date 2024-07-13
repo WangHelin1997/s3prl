@@ -31,15 +31,18 @@ class DownstreamExpert(nn.Module):
         base_dir = self.datarc["base_dir"]
         segment_size = self.datarc["segment_size"]
         
-        traindataset = SpeechEmotionDataset(train_meta, segment_size, base_dir)
-        trainlen = int((1 - self.datarc['valid_ratio']*2) * len(traindataset))
-        val_length = len(traindataset) - trainlen
-        lengths = [trainlen, val_length]
-        
-        torch.manual_seed(0)
-        self.train_dataset, dev_dataset = random_split(traindataset, lengths)
-        lengths = [val_length//2, val_length-(val_length//2)]
-        self.dev_dataset, self.test_dataset = random_split(dev_dataset, lengths)
+        if kwargs.get('mode', 'train') == "inference":
+            pass
+        else:
+            traindataset = SpeechEmotionDataset(train_meta, segment_size, base_dir)
+            trainlen = int((1 - self.datarc['valid_ratio']*2) * len(traindataset))
+            val_length = len(traindataset) - trainlen
+            lengths = [trainlen, val_length]
+            
+            torch.manual_seed(0)
+            self.train_dataset, dev_dataset = random_split(traindataset, lengths)
+            lengths = [val_length//2, val_length-(val_length//2)]
+            self.dev_dataset, self.test_dataset = random_split(dev_dataset, lengths)
 
         model_cls = eval(self.modelrc['select'])
         model_conf = self.modelrc.get(self.modelrc['select'], {})
