@@ -150,7 +150,7 @@ def get_downstream_args():
         override(args.override, args, config)
         os.makedirs(args.expdir, exist_ok=True)
     
-    return args, config, backup_files
+    return args, config, backup_files, tag
 
 
 def main():
@@ -161,7 +161,7 @@ def main():
     hack_isinstance()
 
     # get config and arguments
-    args, config, backup_files = get_downstream_args()
+    args, config, backup_files, tag = get_downstream_args()
     if args.cache_dir is not None:
         torch.hub.set_dir(args.cache_dir)
 
