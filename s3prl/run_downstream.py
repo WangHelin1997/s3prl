@@ -88,6 +88,7 @@ def get_downstream_args():
 
     args = parser.parse_args()
     tag = args.tag
+    output_name = args.output_name
     backup_files = []
 
     if args.expdir is None:
@@ -150,7 +151,7 @@ def get_downstream_args():
         override(args.override, args, config)
         os.makedirs(args.expdir, exist_ok=True)
     
-    return args, config, backup_files, tag
+    return args, config, backup_files, tag, output_name
 
 
 def main():
@@ -161,7 +162,7 @@ def main():
     hack_isinstance()
 
     # get config and arguments
-    args, config, backup_files, tag = get_downstream_args()
+    args, config, backup_files, tag, output_name = get_downstream_args()
     if args.cache_dir is not None:
         torch.hub.set_dir(args.cache_dir)
 
@@ -214,6 +215,7 @@ def main():
         torch.backends.cudnn.deterministic = True
         torch.backends.cudnn.benchmark = False
     args.tag = tag
+    args.output_name = output_name
     print(args.tag)
     runner = Runner(args, config)
     eval(f'runner.{args.mode}')()
